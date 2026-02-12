@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String?   @unique
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  userId     String?
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([token])
+}
+
+model Trip {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  centerLat   Float
+  centerLng   Float
+  placeId     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  days        TripDay[]
+  invites     GroupInvite[]
+  votes       Vote[]
+
+  @@index([slug])
+}
+
+model TripDay {
+  id       String     @id @default(cuid())
+  tripId   String
+  dayIndex Int
+  trip     Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  items    TripItem[]
+
+  @@unique([tripId, dayIndex])
+  @@index([tripId])
+}
+
+model TripItem {
+  id         String   @id @default(cuid())
+  tripDayId  String
+  placeId    String
+  name       String
+  lat        Float
+  lng        Float
+  category   String
+  orderIndex Int
+  notes      String?
+  tripDay    TripDay  @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+
+  @@index([tripDayId])
+  @@index([placeId])
+}
+
+model GroupInvite {
+  id        String   @id @default(cuid())
+  tripId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([token])
+}
+
+model Vote {
+  id           String   @id @default(cuid())
+  tripId       String
+  tokenOrUserId String
+  placeId      String
+  voteValue    Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  trip         Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, tokenOrUserId, placeId])
+  @@index([tripId, placeId])
+}
+
+model PlaceCache {
+  placeId    String   @id
+  json       Json
+  fetchedAt  DateTime @default(now())
+
+  @@index([fetchedAt])
+}
+
+model NearbyCache {
+  cacheKey   String   @id
+  json       Json
+  fetchedAt  DateTime @default(now())
+
+  @@index([fetchedAt])
+}

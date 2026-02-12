@@ -1,0 +1,33 @@
+import { db } from "@/lib/db";
+
+export async function getPlaceCache<T>(placeId: string, ttlHours = 24): Promise<T | null> {
+  const row = await db.placeCache.findUnique({ where: { placeId } });
+  if (!row) return null;
+  const age = Date.now() - row.fetchedAt.getTime();
+  if (age > ttlHours * 60 * 60 * 1000) return null;
+  return row.json as T;
+}
+
+export async function setPlaceCache(placeId: string, json: unknown) {
+  await db.placeCache.upsert({
+    where: { placeId },
+    create: { placeId, json, fetchedAt: new Date() },
+    update: { json, fetchedAt: new Date() }
+  });
+}
+
+export async function getNearbyCache<T>(cacheKey: string, ttlHours = 6): Promise<T | null> {
+  const row = await db.nearbyCache.findUnique({ where: { cacheKey } });
+  if (!row) return null;
+  const age = Date.now() - row.fetchedAt.getTime();
+  if (age > ttlHours * 60 * 60 * 1000) return null;
+  return row.json as T;
+}
+
+export async function setNearbyCache(cacheKey: string, json: unknown) {
+  await db.nearbyCache.upsert({
+    where: { cacheKey },
+    create: { cacheKey, json, fetchedAt: new Date() },
+    update: { json, fetchedAt: new Date() }
+  });
+}
