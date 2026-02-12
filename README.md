@@ -41,13 +41,14 @@ Create two keys:
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and fill values:
+Create both `.env` and `.env.local` from `.env.example`:
 
 ```bash
+cp .env.example .env
 cp .env.example .env.local
 ```
 
-`.env.local`:
+Set values in both files:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/one_click_away?schema=public"
@@ -62,9 +63,9 @@ RATE_LIMIT_MAX_REQUESTS="60"
 
 ```bash
 pnpm install
-pnpm prisma generate
-pnpm prisma migrate dev --name init
-pnpm prisma db seed
+pnpm prisma:generate
+pnpm prisma:migrate --name init
+pnpm prisma:seed
 pnpm dev
 ```
 
